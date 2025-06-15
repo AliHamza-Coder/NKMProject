@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { User, Search, ShoppingCart, Menu, X, Heart } from "lucide-react"
+import { User, UserCheck, Search, ShoppingCart, Menu, X, Heart } from "lucide-react"
 import { getActiveMarqueeMessages } from "../data/marquee-data"
 import Link from "next/link"
+import { useAuth } from "@/lib/services/auth-service"
 
 const megaMenuData = {
   "Upholstery Fabric": {
@@ -65,6 +66,7 @@ export default function Navbar({
 }: NavbarProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { isAuthenticated } = useAuth()
 
   // Get marquee messages from JSON data
   const marqueeText = getActiveMarqueeMessages()
@@ -122,7 +124,11 @@ export default function Navbar({
           <Link href="/account"
             className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110 transform group"
           >
-            <User className="w-5 h-5 text-gray-600 group-hover:text-black transition-colors duration-300" />
+            {isAuthenticated ? (
+              <UserCheck className="w-5 h-5 text-green-600 group-hover:text-green-700 transition-colors duration-300" />
+            ) : (
+              <User className="w-5 h-5 text-gray-600 group-hover:text-black transition-colors duration-300" />
+            )}
           </Link>
 
           <Link href="/cart"
