@@ -3,17 +3,27 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Eye, EyeOff, User, Mail, Lock } from "lucide-react"
+import { Eye, EyeOff, User, Mail, Lock, LogOut } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { loginUser, signupUser, logoutUser, loginWithGoogle, useAuth } from "@/lib/services/auth-service"
+import { useSession } from "next-auth/react"
 
 interface AccountPageProps {
   onGoBack?: () => void
 }
 
 export default function AccountPage({ onGoBack }: AccountPageProps) {
+  const router = useRouter()
+  const { data: session } = useSession()
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  
   // Use null as initial state to prevent hydration mismatch
   const [activeTab, setActiveTab] = useState<"login" | "signup" | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -35,16 +45,89 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
     })
   }
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Login:", { email: formData.email, password: formData.password })
-    // Handle login logic
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const result = await loginUser({
+        email: formData.email,
+        password: formData.password
+      })
+      
+      if (result.success) {
+        setSuccess("Login successful!")
+        
+        // Redirect to home page after successful login
+        setTimeout(() => {
+          router.push('/')
+        }, 1500)
+      } else {
+        setError(result.error || "Login failed. Please try again.")
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+      console.error("Login error:", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Signup:", formData)
-    // Handle signup logic
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const result = await signupUser({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        address: formData.address
+      })
+      
+      if (result.success) {
+        setSuccess("Account created successfully! You can now log in.")
+        setActiveTab("login")
+        setFormData({
+          ...formData,
+          password: ""
+        })
+      } else {
+        setError(result.error || "Signup failed. Please try again.")
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+      console.error("Signup error:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handleGoogleLogin = async () => {
+    setLoading(true)
+    try {
+      await loginWithGoogle()
+    } catch (err) {
+      setError("Google login failed. Please try again.")
+      console.error("Google login error:", err)
+      setLoading(false)
+    }
+  }
+  
+  const handleLogout = async () => {
+    setLoading(true)
+    try {
+      await logoutUser()
+      setSuccess("You have been logged out successfully.")
+    } catch (err) {
+      setError("Logout failed. Please try again.")
+      console.error("Logout error:", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -59,11 +142,74 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
               <User className="w-7 h-7 md:w-8 md:h-8 text-white" />
             </div>
             <h1 className="text-xl md:text-3xl font-bold text-black mb-1 md:mb-2">Welcome to NKM Fabrics</h1>
-            <p className="text-sm md:text-base text-gray-600">Sign in to your account or create a new one</p>
+            {!isAuthenticated && (
+              <p className="text-sm md:text-base text-gray-600">Sign in to your account or create a new one</p>
+            )}
+            {isAuthenticated && user && (
+              <p className="text-sm md:text-base text-gray-600">
+                Welcome back, {user.firstName} {user.lastName}
+              </p>
+            )}
           </div>
 
-          {/* Tab Navigation */}
-          {isMounted && (
+          {/* Error and Success Messages */}
+          {error && (
+            <div className="max-w-xl mx-auto mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+          
+          {success && (
+            <div className="max-w-xl mx-auto mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+              {success}
+            </div>
+          )}
+
+          {/* User Profile when logged in */}
+          {isMounted && isAuthenticated && user && (
+            <div className="max-w-xl mx-auto bg-white rounded-lg shadow-sm p-6 md:p-8">
+              <h2 className="text-lg md:text-xl font-semibold mb-4">Your Profile</h2>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">First Name</p>
+                    <p className="font-medium">{user.firstName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Last Name</p>
+                    <p className="font-medium">{user.lastName}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{user.email}</p>
+                </div>
+                
+                {user.address && (
+                  <div>
+                    <p className="text-sm text-gray-500">Address</p>
+                    <p className="font-medium">{user.address}</p>
+                  </div>
+                )}
+                
+                <button
+                  onClick={handleLogout}
+                  disabled={loading}
+                  className={`mt-4 inline-flex items-center justify-center bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300 ${
+                    loading ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  <span>{loading ? 'Logging out...' : 'Logout'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab Navigation when not logged in */}
+          {isMounted && !isAuthenticated && (
             <div className="max-w-md mx-auto flex bg-gray-100 rounded-lg p-1 mb-6 md:mb-8">
               <button
                 onClick={() => setActiveTab("login")}
@@ -85,7 +231,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
           )}
 
           {/* Login Form */}
-          {isMounted && activeTab === "login" && (
+          {isMounted && !isAuthenticated && activeTab === "login" && (
             <form onSubmit={handleLogin} className="max-w-xl mx-auto space-y-4 md:space-y-6 px-2 sm:px-0">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Email Address</label>
@@ -99,6 +245,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
                     placeholder="Enter your email"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -115,6 +262,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     className="w-full pl-9 md:pl-10 pr-10 md:pr-12 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
                     placeholder="Enter your password"
                     required
+                    disabled={loading}
                   />
                   <button
                     type="button"
@@ -138,15 +286,18 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2.5 md:py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform hover:shadow-lg text-sm md:text-base mt-2"
+                className={`w-full bg-black text-white py-2.5 md:py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform hover:shadow-lg text-sm md:text-base mt-2 ${
+                  loading ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
+                disabled={loading}
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
           )}
 
           {/* Signup Form */}
-          {isMounted && activeTab === "signup" && (
+          {isMounted && !isAuthenticated && activeTab === "signup" && (
             <form onSubmit={handleSignup} className="max-w-xl mx-auto space-y-4 md:space-y-6 px-2 sm:px-0">
               <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div>
@@ -159,6 +310,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     className="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
                     placeholder="First name"
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div>
@@ -171,6 +323,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     className="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
                     placeholder="Last name"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -187,6 +340,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
                     placeholder="Enter your email"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -203,6 +357,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     className="w-full pl-9 md:pl-10 pr-10 md:pr-12 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
                     placeholder="Create password"
                     required
+                    disabled={loading}
                   />
                   <button
                     type="button"
@@ -213,6 +368,19 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                   </button>
                 </div>
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Address (Optional)</label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  className="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-sm md:text-base"
+                  placeholder="Your address"
+                  rows={3}
+                  disabled={loading}
+                />
+              </div>
 
               <div>
                 <label className="flex items-start">
@@ -220,6 +388,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                     type="checkbox"
                     className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black mt-0.5"
                     required
+                    disabled={loading}
                   />
                   <span className="ml-2 text-xs sm:text-sm text-gray-600">
                     I agree to the{" "}
@@ -236,15 +405,18 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2.5 md:py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform hover:shadow-lg text-sm md:text-base mt-2"
+                className={`w-full bg-black text-white py-2.5 md:py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform hover:shadow-lg text-sm md:text-base mt-2 ${
+                  loading ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
+                disabled={loading}
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
           )}
 
           {/* Social Login */}
-          {isMounted && (
+          {isMounted && !isAuthenticated && (
             <div className="mt-6 md:mt-8 max-w-md mx-auto px-2 sm:px-0">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -256,7 +428,12 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
               </div>
 
               <div className="mt-4 md:mt-6">
-                <button className="w-full inline-flex justify-center items-center py-2.5 md:py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:scale-105 transform hover:shadow-lg">
+                <button 
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  className="w-full inline-flex justify-center items-center py-2.5 md:py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
+                  disabled={loading}
+                >
                   <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
@@ -275,7 +452,7 @@ export default function AccountPage({ onGoBack }: AccountPageProps) {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                   </svg>
-                  <span className="ml-2">Continue with Google</span>
+                  <span className="ml-2">{loading ? 'Connecting...' : 'Continue with Google'}</span>
                 </button>
               </div>
             </div>

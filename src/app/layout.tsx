@@ -5,6 +5,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import ScrollToTop from "@/components/scroll-to-top";
 import WhatsAppButton from "@/components/whatsapp-button";
+import AuthProvider from "@/components/auth-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,11 +33,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <Navbar/>
-        {children}
-        <Footer/>
-        <ScrollToTop />
-        <WhatsAppButton />
+        <AuthProvider>
+          <Navbar/>
+          {children}
+          <Footer/>
+          <ScrollToTop />
+          <WhatsAppButton />
+        </AuthProvider>
       </body>
     </html>
   );
