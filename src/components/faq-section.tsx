@@ -26,7 +26,7 @@ export default function FAQSection() {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-16 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
@@ -39,18 +39,18 @@ export default function FAQSection() {
           {faqData.map((faq, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
+              className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-50 transition-colors duration-200"
+                className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-100 transition-all duration-300 cursor-pointer"
               >
                 <h3 className="text-lg font-semibold text-gray-900 pr-4">{faq.question}</h3>
                 <div className="flex-shrink-0">
                   {openIndex === index ? (
-                    <ChevronUp className="w-5 h-5 text-red-500" />
+                    <ChevronUp className="w-5 h-5 text-gray-600" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
                   )}
                 </div>
               </button>
@@ -75,13 +75,13 @@ export default function FAQSection() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={openWhatsApp}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200"
+              className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
             >
               Contact Support
             </button>
             <button
               onClick={openLiveChat}
-              className="border border-gray-300 hover:border-red-500 text-gray-700 hover:text-red-500 px-6 py-3 rounded-lg font-semibold transition-colors duration-200"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
             >
               Live Chat
             </button>

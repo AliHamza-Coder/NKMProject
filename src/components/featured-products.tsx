@@ -59,12 +59,6 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
     // Quick view modal functionality
   }
 
-  const handleCompare = (e: React.MouseEvent, product: Product) => {
-    e.stopPropagation()
-    console.log(`Add to compare: ${product.name}`)
-    // Add to compare functionality
-  }
-
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
     console.log(`Add to wishlist: ${product.name}`)
@@ -135,15 +129,6 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
                     title="Quick View"
                   >
                     <Eye className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
-                  </button>
-
-                  {/* Add to Compare */}
-                  <button
-                    onClick={(e) => handleCompare(e, product)}
-                    className="bg-white hover:bg-green-500 hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
-                    title="Add to Compare"
-                  >
-                    <RotateCcw className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
                   </button>
                 </div>
 
