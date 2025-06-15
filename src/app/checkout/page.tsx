@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Check, CreditCard, Truck, MapPin, ArrowLeft, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 interface CheckoutPageProps {
   onGoBack?: () => void
@@ -604,17 +605,12 @@ export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
                         : "5-7 business days"}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    console.log("Continue shopping")
-                    if (onGoBack) {
-                      onGoBack()
-                    }
-                  }}
-                  className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform"
+                <Link
+                  href="/category/all-categories"
+                  className="inline-block bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
                 >
                   Continue Shopping
-                </button>
+                </Link>
               </div>
             )}
 

@@ -313,18 +313,13 @@ export default function CartPage({ onGoBack, onCheckout }: CartPageProps) {
                 </div>
               )}
 
-              <button
-                onClick={() => {
-                  console.log("Proceed to checkout")
-                  if (onCheckout) {
-                    onCheckout()
-                  }
-                }}
+              <Link
+                href="/checkout"
                 className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform hover:shadow-lg flex items-center justify-center"
               >
                 Proceed to Checkout
                 <ArrowRight className="w-5 h-5 ml-2" />
-              </button>
+              </Link>
 
               <Link
                 href="/category/all-categories"
