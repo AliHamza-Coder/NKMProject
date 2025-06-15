@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
     const db = await getDatabase();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database connection failed' },
-        { status: 500 }
+        { error: 'Please configure backend database connection' },
+        { status: 503 }
       );
     }
 

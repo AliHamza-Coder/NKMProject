@@ -3,8 +3,20 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Heart, ShoppingCart, Eye, RotateCcw } from "lucide-react"
+import {
+  Search,
+  X,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  Heart,
+  ShoppingCart,
+  Eye,
+  RotateCcw,
+  ChevronLeft,
+} from "lucide-react"
 import { products, categories, brands, suitabilityOptions, type Product } from "@/data/products"
+import Breadcrumb from "@/components/breadcrumb"
 
 interface SearchPageProps {
   onGoBack?: () => void
@@ -28,6 +40,12 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
     brands: true,
     suitability: true,
   })
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: "Search Products", current: true },
+  ]
 
   // Search suggestions
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -174,11 +192,6 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
     console.log(`Quick view: ${product.name}`)
   }
 
-  const handleCompare = (e: React.MouseEvent, product: Product) => {
-    e.stopPropagation()
-    console.log(`Add to compare: ${product.name}`)
-  }
-
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
     console.log(`Add to wishlist: ${product.name}`)
@@ -204,8 +217,10 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Go Back Button */}
+      <Breadcrumb items={breadcrumbItems} />
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Back to shopping link */}
         <button
           onClick={() => {
             console.log("Go back to previous page")
@@ -215,22 +230,12 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
           }}
           className="flex items-center text-gray-600 hover:text-black transition-all duration-300 hover:scale-105 transform group mb-6"
         >
-          <svg
-            className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Go Back
+          <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform duration-300" />
+          <span>Go Back</span>
         </button>
 
-        {/* Search Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 animate-fadeInScale">
-          <h1 className="text-2xl md:text-3xl font-bold text-black mb-6">Search Products</h1>
-
-          {/* Search Bar */}
+        {/* Search Bar */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 animate-fadeInScale">
           <div className="relative">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -505,12 +510,7 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
           <div className="lg:w-3/4">
             {/* Products Controls Bar - Items Count, View Toggle, Sort */}
             <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-lg border border-gray-200">
-              {/* Items Count */}
-              <span className="text-gray-600 font-medium">
-                {isLoading ? "Searching..." : `${filteredProducts.length} results`}
-                {searchQuery && ` for "${searchQuery}"`}
-              </span>
-
+              
               {/* View Mode Toggle */}
               <div className="flex items-center space-x-2">
                 <button
@@ -566,6 +566,12 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
                   </svg>
                 </button>
               </div>
+              
+              {/* Items Count */}
+              <span className="text-gray-600 font-medium">
+                {isLoading ? "Searching..." : `${filteredProducts.length} results`}
+                {searchQuery && ` for "${searchQuery}"`}
+              </span>
 
               {/* Sort Dropdown */}
               <select
@@ -653,15 +659,6 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
                               title="Quick View"
                             >
                               <Eye className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
-                            </button>
-
-                            {/* Add to Compare */}
-                            <button
-                              onClick={(e) => handleCompare(e, product)}
-                              className="bg-white hover:bg-green-500 hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
-                              title="Add to Compare"
-                            >
-                              <RotateCcw className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
                             </button>
                           </div>
 
@@ -797,13 +794,6 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
                                 title="Add to Wishlist"
                               >
                                 <Heart className="w-4 h-4 hover:text-red-500 transition-colors duration-300" />
-                              </button>
-                              <button
-                                onClick={(e) => handleCompare(e, product)}
-                                className="bg-gray-100 hover:bg-green-50 text-gray-700 p-2 rounded-lg transition-all duration-300 hover:scale-110 transform"
-                                title="Add to Compare"
-                              >
-                                <RotateCcw className="w-4 h-4 hover:text-green-500 transition-colors duration-300" />
                               </button>
                             </div>
                           </div>

@@ -8,7 +8,7 @@ export async function getAllUsers(): Promise<User[]> {
   try {
     const db = await getDatabase();
     if (!db) {
-      throw new Error('Database connection failed');
+      return [];
     }
 
     const users = await db.collection('users').find({}).toArray();
@@ -228,7 +228,7 @@ export async function updateUserLastLogin(id: string): Promise<void> {
 export async function verifyUserPassword(email: string, password: string): Promise<User | null> {
   try {
     const user = await getUserByEmail(email);
-    if (!user) {
+    if (!user || !user.password) {
       return null;
     }
 
@@ -249,7 +249,7 @@ export async function getUserCount(): Promise<number> {
   try {
     const db = await getDatabase();
     if (!db) {
-      throw new Error('Database connection failed');
+      return 0;
     }
 
     return await db.collection('users').countDocuments();

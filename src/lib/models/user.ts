@@ -5,7 +5,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
+  password?: string; // Optional for Google OAuth users
+  googleId?: string; // For Google OAuth users
   address?: string;
   createdAt: Date;
   updatedAt: Date;

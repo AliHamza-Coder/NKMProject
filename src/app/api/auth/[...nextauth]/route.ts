@@ -25,7 +25,8 @@ const handler = NextAuth({
         try {
           const db = await getDatabase();
           if (!db) {
-            throw new Error("Database connection failed");
+            // Return null instead of throwing error when database is not configured
+            return null;
           }
 
           // Find user by email
@@ -37,6 +38,16 @@ const handler = NextAuth({
           // Check if user is active
           if (!user.active) {
             throw new Error("Your account has been deactivated");
+          }
+
+          // Check if user was created via Google OAuth (has googleId but no password)
+          if (user.googleId && !user.password) {
+            return null; // This will be handled as invalid credentials
+          }
+
+          // Check if user has no password (created via Google)
+          if (!user.password) {
+            return null; // This will be handled as invalid credentials
           }
 
           // Verify password
@@ -76,7 +87,9 @@ const handler = NextAuth({
           try {
             const db = await getDatabase();
             if (!db) {
-              throw new Error("Database connection failed");
+              // Skip database operations when database is not configured
+              console.log("Database not configured, skipping user operations");
+              return token;
             }
 
             // Check if user exists
