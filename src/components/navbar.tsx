@@ -5,6 +5,7 @@ import { User, UserCheck, Search, ShoppingCart, Menu, X, Heart } from "lucide-re
 import { getActiveMarqueeMessages } from "../data/marquee-data"
 import Link from "next/link"
 import { useAuth } from "@/lib/services/auth-service"
+import { useShop } from "@/context/ShopContext"
 
 const megaMenuData = {
   "Upholstery Fabric": {
@@ -67,6 +68,7 @@ export default function Navbar({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { isAuthenticated } = useAuth()
+  const { cart, wishlist } = useShop()
 
   // Get marquee messages from JSON data
   const marqueeText = getActiveMarqueeMessages()
@@ -117,7 +119,7 @@ export default function Navbar({
           >
             <Heart className="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors duration-300" />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              6
+              {wishlist.length}
             </span>
           </Link>
 
@@ -136,7 +138,7 @@ export default function Navbar({
           >
             <ShoppingCart className="w-5 h-5 text-gray-600 group-hover:text-black transition-colors duration-300" />
             <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              3
+              {cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)}
             </span>
           </Link>
         </div>

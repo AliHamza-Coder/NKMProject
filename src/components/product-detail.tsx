@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { Heart, Minus, Plus, ShoppingCart, Eye } from "lucide-react"
-import { products } from "../data/products"
+import { products, type Product } from "../data/products"
 import Breadcrumb from "./breadcrumb"
+import { useShop } from "@/context/ShopContext"
 
 interface ProductDetailProps {
   productSlug?: string
@@ -11,6 +12,7 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ productSlug = "tulips-linen-fabric", onGoBack }: ProductDetailProps) {
+  const { addToCart, addToWishlist, isInCart, isInWishlist } = useShop()
   const product = products.find((p) => p.slug === productSlug) || products[0]
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedColor, setSelectedColor] = useState(product.colors[0])
@@ -24,13 +26,19 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
     { label: product.name, current: true },
   ]
 
-  const handleAddToCart = () => {
-    console.log("Add to cart:", {
-      product: product.id,
-      color: selectedColor,
-      size: selectedSize,
-      quantity,
-    })
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation()
+    addToCart(product)
+  }
+
+  const handleQuickView = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation()
+    // Quick view modal functionality
+  }
+
+  const handleWishlist = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation()
+    addToWishlist(product)
   }
 
   return (
@@ -165,7 +173,7 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
               </div>
 
               <button
-                onClick={handleAddToCart}
+                onClick={(e) => handleAddToCart(e, product)}
                 className="flex-1 bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform"
               >
                 ADD TO CART
@@ -268,24 +276,20 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
 
                   {/* Wishlist Button */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log(`Add to wishlist: ${suggestedProduct.name}`);
-                    }}
+                    onClick={(e) => handleWishlist(e, suggestedProduct)}
                     className="absolute top-2 md:top-3 right-2 md:right-3 p-1.5 md:p-2 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 transform hover:bg-red-50"
                   >
-                    <Heart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+                    <Heart 
+                      className={`w-3 h-3 md:w-4 md:h-4 ${isInWishlist(suggestedProduct.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} 
+                    />
                   </button>
 
                   {/* Action Buttons - Bottom Right */}
                   <div className="absolute bottom-2 md:bottom-3 right-2 md:right-3 flex flex-col space-y-1 md:space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                     {/* Add to Cart */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log(`Add to cart: ${suggestedProduct.name}`);
-                      }}
-                      className="bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
+                      onClick={(e) => handleAddToCart(e, suggestedProduct)}
+                      className={`bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn ${isInCart(suggestedProduct.id) ? 'bg-black text-white' : ''}`}
                       title="Add to Cart"
                     >
                       <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
@@ -293,17 +297,12 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
 
                     {/* Quick View */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log(`Quick view: ${suggestedProduct.name}`);
-                      }}
-                      className="bg-white hover:bg-blue-500 hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
+                      onClick={(e) => handleQuickView(e, suggestedProduct)}
+                      className="bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
                       title="Quick View"
                     >
                       <Eye className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
                     </button>
-
-
                   </div>
 
                   {/* Sale Badge (if product has originalPrice) */}

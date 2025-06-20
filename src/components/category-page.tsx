@@ -6,6 +6,7 @@ import { useState } from "react"
 import { Heart, ShoppingCart, Eye, X, ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react"
 import { products, type Product, categories, brands, suitabilityOptions } from "../data/products"
 import Breadcrumb from "./breadcrumb"
+import { useShop } from "@/context/ShopContext"
 
 interface CategoryPageProps {
   categorySlug?: string
@@ -13,6 +14,8 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ categorySlug = "all-categories", onProductSelect }: CategoryPageProps) {
+  const { addToCart, addToWishlist, isInCart, isInWishlist } = useShop()
+
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
@@ -108,12 +111,12 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
   // Handle action buttons
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
-    console.log(`Add to cart: ${product.name}`)
+    addToCart(product)
   }
 
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
-    console.log(`Quick view: ${product.name}`)
+    // Quick view modal functionality
   }
 
   const handleCompare = (e: React.MouseEvent, product: Product) => {
@@ -123,7 +126,7 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
 
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
-    console.log(`Add to wishlist: ${product.name}`)
+    addToWishlist(product)
   }
 
   // Handle price range change
@@ -478,7 +481,9 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
                             onClick={(e) => handleWishlist(e, product)}
                             className="absolute top-2 md:top-3 right-2 md:right-3 p-1.5 md:p-2 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 transform hover:bg-red-50"
                           >
-                            <Heart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+                            <Heart 
+                              className={`w-3 h-3 md:w-4 md:h-4 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} 
+                            />
                           </button>
 
                           {/* Action Buttons - Bottom Right */}
@@ -486,7 +491,7 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
                             {/* Add to Cart */}
                             <button
                               onClick={(e) => handleAddToCart(e, product)}
-                              className="bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
+                              className={`bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn ${isInCart(product.id) ? 'bg-black text-white' : ''}`}
                               title="Add to Cart"
                             >
                               <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
@@ -495,7 +500,7 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
                             {/* Quick View */}
                             <button
                               onClick={(e) => handleQuickView(e, product)}
-                              className="bg-white hover:bg-blue-500 hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
+                              className="bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
                               title="Quick View"
                             >
                               <Eye className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
@@ -633,7 +638,9 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
                                 className="bg-gray-100 hover:bg-red-50 text-gray-700 p-2 rounded-lg transition-all duration-300 hover:scale-110 transform"
                                 title="Add to Wishlist"
                               >
-                                <Heart className="w-4 h-4 hover:text-red-500 transition-colors duration-300" />
+                                <Heart 
+                                  className={`w-4 h-4 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} 
+                                />
                               </button>
                             </div>
                           </div>

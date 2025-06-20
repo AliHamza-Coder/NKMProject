@@ -5,6 +5,7 @@ import type React from "react"
 import { Heart, ShoppingCart, Eye, RotateCcw } from "lucide-react"
 import { products, type Product } from "../data/products"
 import Link from "next/link"
+import { useShop } from "@/context/ShopContext"
 
 interface FeaturedProductsProps {
   onProductSelect?: (productSlug: string) => void
@@ -12,6 +13,8 @@ interface FeaturedProductsProps {
 }
 
 export default function FeaturedProducts({ onProductSelect, onViewAllClick }: FeaturedProductsProps) {
+  const { addToCart, addToWishlist, isInCart, isInWishlist } = useShop()
+  
   // Get first 8 products as featured products
   const featuredProducts = products.slice(0, 8)
   const productCount = featuredProducts.length
@@ -49,8 +52,7 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
-    console.log(`Add to cart: ${product.name}`)
-    // Add to cart functionality
+    addToCart(product)
   }
 
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
@@ -61,8 +63,7 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
 
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
-    console.log(`Add to wishlist: ${product.name}`)
-    // Add to wishlist functionality
+    addToWishlist(product)
   }
 
   return (
@@ -108,7 +109,9 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
                   onClick={(e) => handleWishlist(e, product)}
                   className="absolute top-2 md:top-3 right-2 md:right-3 p-1.5 md:p-2 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 transform hover:bg-red-50"
                 >
-                  <Heart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+                  <Heart 
+                    className={`w-3 h-3 md:w-4 md:h-4 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} 
+                  />
                 </button>
 
                 {/* Action Buttons - Bottom Right */}
@@ -116,7 +119,7 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
                   {/* Add to Cart */}
                   <button
                     onClick={(e) => handleAddToCart(e, product)}
-                    className="bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
+                    className={`bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn ${isInCart(product.id) ? 'bg-black text-white' : ''}`}
                     title="Add to Cart"
                   >
                     <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />

@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { Heart, ShoppingCart, Trash2, ArrowRight, List, LayoutGrid, ChevronLeft } from "lucide-react"
-import { initialWishlistItems, type WishlistItem } from "@/data/wishlist-data"
+import { WishlistItem } from "@/data/wishlist-data"
 import Breadcrumb from "@/components/breadcrumb"
 import Link from "next/link"
+import { useShop } from "@/context/ShopContext"
 
 interface WishlistPageProps {
   onGoBack?: () => void
@@ -12,9 +13,9 @@ interface WishlistPageProps {
 }
 
 export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPageProps) {
+  const { wishlist, removeFromWishlist, addToCart, clearWishlist } = useShop()
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
   const [gridColumns, setGridColumns] = useState<2 | 3 | 4>(3)
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(initialWishlistItems)
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -22,38 +23,46 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
     { label: "My Wishlist", current: true },
   ]
 
-  const removeItem = (id: string) => {
-    setWishlistItems((items) => items.filter((item) => item.id !== id))
+  const handleRemoveItem = (id: string) => {
+    removeFromWishlist(id)
   }
 
-  const clearWishlist = () => {
-    setWishlistItems([])
+  const handleClearWishlist = () => {
+    clearWishlist()
   }
 
-  const addToCart = (item: WishlistItem) => {
-    console.log(`Add to cart: ${item.name}`)
-    // Add to cart functionality
+  const handleAddToCart = (item: WishlistItem) => {
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      images: [item.image],
+      brand: item.brand,
+      inStock: item.inStock,
+      slug: item.slug,
+      category: "fabric",
+      suitability: ["all"],
+      description: "",
+      features: [],
+      colors: [],
+      sizes: []
+    })
+    removeFromWishlist(item.id)
   }
 
-  const moveToCart = (item: WishlistItem) => {
-    addToCart(item)
-    removeItem(item.id)
-  }
-
-  const moveAllToCart = () => {
-    const inStockItems = wishlistItems.filter((item) => item.inStock)
-    inStockItems.forEach((item) => addToCart(item))
-    setWishlistItems((items) => items.filter((item) => !item.inStock))
+  const handleMoveAllToCart = () => {
+    const inStockItems = wishlist.filter((item) => item.inStock)
+    inStockItems.forEach((item) => handleAddToCart(item))
   }
 
   const handleProductClick = (item: WishlistItem) => {
-    console.log(`Navigate to: /product/${item.slug}`)
     if (onProductSelect) {
       onProductSelect(item.slug)
     }
   }
 
-  if (wishlistItems.length === 0) {
+  if (wishlist.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Breadcrumb items={breadcrumbItems} />
@@ -87,7 +96,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
     )
   }
 
-  const inStockCount = wishlistItems.filter((item) => item.inStock).length
+  const inStockCount = wishlist.filter((item) => item.inStock).length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,9 +139,9 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
             </div>
 
             {/* Center: Items Count */}
-            <div className="flex-1 flex justify-center">
+            <div className="text-center">
               <span className="text-gray-600 font-medium text-sm lg:text-base">
-                {wishlistItems.length} items saved in wishlist
+                {wishlist.length} items saved in wishlist
               </span>
             </div>
 
@@ -140,7 +149,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
             <div className="flex items-center space-x-3">
               {inStockCount > 0 && (
                 <button
-                  onClick={moveAllToCart}
+                  onClick={handleMoveAllToCart}
                   className="bg-black text-white px-4 lg:px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform flex items-center text-sm lg:text-base"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
@@ -150,7 +159,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                 </button>
               )}
               <button
-                onClick={clearWishlist}
+                onClick={handleClearWishlist}
                 className="text-red-500 hover:text-red-700 font-medium transition-colors duration-300 hover:scale-105 transform px-3 lg:px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 text-sm lg:text-base"
               >
                 Clear All
@@ -191,7 +200,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             }`}
           >
-            {wishlistItems.map((item, index) => (
+            {wishlist.map((item, index) => (
               <div
                 key={item.id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden group animate-fadeInScale"
@@ -208,7 +217,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
 
                   {/* Remove from Wishlist */}
                   <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => handleRemoveItem(item.id)}
                     className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition-all duration-300 hover:scale-110 transform"
                   >
                     <Heart className="w-4 h-4 text-red-500 fill-current" />
@@ -244,11 +253,11 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex items-center space-x-2">
                     {item.inStock ? (
                       <>
                         <button
-                          onClick={() => moveToCart(item)}
+                          onClick={() => handleAddToCart(item)}
                           className="flex-1 bg-black text-white py-2 px-3 rounded-lg text-xs lg:text-sm font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform flex items-center justify-center"
                         >
                           <ShoppingCart className="w-3 lg:w-4 h-3 lg:h-4 mr-1" />
@@ -256,7 +265,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                           <span className="sm:hidden">Move</span>
                         </button>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                           className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 hover:scale-105 transform"
                         >
                           <Trash2 className="w-3 lg:w-4 h-3 lg:h-4 text-gray-600" />
@@ -280,7 +289,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
         {/* Wishlist Items - List View */}
         {viewMode === "list" && (
           <div className="space-y-4">
-            {wishlistItems.map((item, index) => (
+            {wishlist.map((item, index) => (
               <div
                 key={item.id}
                 className="bg-white rounded-xl shadow-lg p-4 md:p-6 animate-fadeInScale"
@@ -303,7 +312,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                   </div>
 
                   {/* Product Details */}
-                  <div className="flex-1 space-y-2">
+                  <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div className="flex-1 mr-4">
                         <h3
@@ -315,14 +324,14 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                         <p className="text-sm text-gray-600">{item.brand}</p>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all duration-300 hover:scale-110 flex-shrink-0"
                       >
                         <Heart className="w-5 h-5 fill-current" />
                       </button>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center space-x-2">
                         <span className="text-lg lg:text-xl font-semibold text-black">£{item.price}</span>
                         {item.originalPrice && (
@@ -335,7 +344,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                         {item.inStock ? (
                           <>
                             <button
-                              onClick={() => moveToCart(item)}
+                              onClick={() => handleAddToCart(item)}
                               className="bg-black text-white px-4 lg:px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform flex items-center text-sm lg:text-base"
                             >
                               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -343,7 +352,7 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
                               <span className="sm:hidden">Move</span>
                             </button>
                             <button
-                              onClick={() => removeItem(item.id)}
+                              onClick={() => handleRemoveItem(item.id)}
                               className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 hover:scale-105 transform"
                             >
                               <Trash2 className="w-4 h-4 text-gray-600" />
