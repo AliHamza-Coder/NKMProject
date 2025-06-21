@@ -2,10 +2,14 @@
 
 import type React from "react"
 
+import { useEffect } from "react"
 import { Heart, ShoppingCart, Eye, RotateCcw } from "lucide-react"
 import { products, type Product } from "../data/products"
 import Link from "next/link"
 import { useShop } from "@/context/ShopContext"
+import { NKMLoader } from "./amazing-loader"
+import { useActionLoading } from "@/hooks/use-loading"
+import { useNavigationWithLoader } from "@/hooks/use-navigation"
 
 interface FeaturedProductsProps {
   onProductSelect?: (productSlug: string) => void
@@ -13,7 +17,20 @@ interface FeaturedProductsProps {
 }
 
 export default function FeaturedProducts({ onProductSelect, onViewAllClick }: FeaturedProductsProps) {
-  const { addToCart, addToWishlist, isInCart, isInWishlist } = useShop()
+  const { addToCart, toggleWishlist, isInCart, isInWishlist } = useShop()
+  const { isLoading, stopLoading } = useActionLoading()
+  const { navigateTo } = useNavigationWithLoader()
+  
+  // Simulate loading when component mounts
+  useEffect(() => {
+    const loadProducts = async () => {
+      // Simulate API call or data loading
+      await new Promise(resolve => setTimeout(resolve, 400))
+      stopLoading()
+    }
+    
+    loadProducts()
+  }, [stopLoading])
   
   // Get first 8 products as featured products
   const featuredProducts = products.slice(0, 8)
@@ -38,8 +55,10 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
     console.log(`Navigate to: /product/${product.slug}`)
     if (onProductSelect) {
       onProductSelect(product.slug)
+    } else {
+      // Navigate to product detail page using slug with loader
+      navigateTo(`/product/${product.slug}`)
     }
-    // Navigation is now handled by Next.js Link component
   }
 
   const handleViewAllClick = () => {
@@ -51,19 +70,45 @@ export default function FeaturedProducts({ onProductSelect, onViewAllClick }: Fe
   }
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
     addToCart(product)
   }
 
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    console.log(`Quick view: ${product.name}`)
-    // Quick view modal functionality
+    // Navigate to product detail page
+    console.log(`Navigate to: /product/${product.slug}`)
+    if (onProductSelect) {
+      onProductSelect(product.slug)
+    } else {
+      // Navigate to product detail page using slug with loader
+      navigateTo(`/product/${product.slug}`)
+    }
   }
 
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    addToWishlist(product)
+    toggleWishlist(product)
+  }
+
+  // Show loader while loading
+  if (isLoading) {
+    return (
+      <section className="py-12 md:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-black mb-4">Featured Products</h2>
+            <p className="text-gray-600">Discover our handpicked selection of premium fabrics</p>
+          </div>
+          <div className="flex justify-center">
+            <NKMLoader size="lg" />
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
+import { NKMLoader } from "./amazing-loader"
 import Link from "next/link"
 import { heroSlides } from "../data/slider-data"
 

@@ -27,7 +27,7 @@ export default function StylishBanners() {
                 <Link href={banner.ctaLink || "/category/all-categories"} className="group bg-black hover:bg-gray-800 text-white px-5 md:px-6 py-2 md:py-3 text-base md:text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl inline-flex items-center mx-auto lg:mx-0 transform hover:-translate-y-1 animate-bounceInScale delay-400 hover:rotate-1 w-auto">
                   <span className="group-hover:scale-110 transition-transform duration-300">{banner.cta}</span>
                   <svg
-                    className="ml-2 w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:scale-110 transition-all duration-300"
+                    className="wml-2 w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:scale-110 transition-all duration-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

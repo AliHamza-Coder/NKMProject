@@ -1,21 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Heart, ShoppingCart, Trash2, ArrowRight, List, LayoutGrid, ChevronLeft } from "lucide-react"
 import { WishlistItem } from "@/data/wishlist-data"
 import Breadcrumb from "@/components/breadcrumb"
 import Link from "next/link"
 import { useShop } from "@/context/ShopContext"
+import { useRouter } from "next/navigation"
+import { NKMLoader } from "@/components/amazing-loader"
+import { usePageLoading } from "@/hooks/use-loading"
+import { useNavigationWithLoader } from "@/hooks/use-navigation"
 
-interface WishlistPageProps {
-  onGoBack?: () => void
-  onProductSelect?: (productSlug: string) => void
-}
-
-export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPageProps) {
+export default function WishlistPage() {
   const { wishlist, removeFromWishlist, addToCart, clearWishlist } = useShop()
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
   const [gridColumns, setGridColumns] = useState<2 | 3 | 4>(3)
+  const { isLoading, stopLoading } = usePageLoading()
+  const router = useRouter()
+  const { navigateTo } = useNavigationWithLoader()
+
+  // Simulate loading when component mounts
+  useEffect(() => {
+    const loadWishlist = async () => {
+      // Simulate API call or data loading
+      await new Promise(resolve => setTimeout(resolve, 500))
+      stopLoading()
+    }
+    
+    loadWishlist()
+  }, [stopLoading])
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -45,9 +58,9 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
       suitability: ["all"],
       description: "",
       features: [],
-      colors: [],
-      sizes: []
-    })
+      colors: ["Default"],
+      sizes: ["Default"]
+    }, "Default", "Default")
     removeFromWishlist(item.id)
   }
 
@@ -57,9 +70,12 @@ export default function WishlistPage({ onGoBack, onProductSelect }: WishlistPage
   }
 
   const handleProductClick = (item: WishlistItem) => {
-    if (onProductSelect) {
-      onProductSelect(item.slug)
-    }
+    navigateTo(`/product/${item.slug}`)
+  }
+
+  // Show loader while loading
+  if (isLoading) {
+    return <NKMLoader fullScreen={true} size="lg" />
   }
 
   if (wishlist.length === 0) {

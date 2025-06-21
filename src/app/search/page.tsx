@@ -17,13 +17,15 @@ import {
 } from "lucide-react"
 import { products, categories, brands, suitabilityOptions, type Product } from "@/data/products"
 import Breadcrumb from "@/components/breadcrumb"
+import { useRouter } from "next/navigation"
+import { useShop } from "@/context/ShopContext"
+import { NKMLoader } from "@/components/amazing-loader"
+import { useNavigationWithLoader } from "@/hooks/use-navigation"
 
-interface SearchPageProps {
-  onGoBack?: () => void
-  onProductSelect?: (productSlug: string) => void
-}
-
-export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProps) {
+export default function SearchPage() {
+  const router = useRouter()
+  const { addToCart, toggleWishlist, isInCart, isInWishlist } = useShop()
+  const { navigateTo } = useNavigationWithLoader()
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -177,24 +179,27 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
 
   const handleProductClick = (product: Product) => {
     console.log(`Navigate to: /product/${product.slug}`)
-    if (onProductSelect) {
-      onProductSelect(product.slug)
-    }
+    navigateTo(`/product/${product.slug}`)
   }
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    console.log(`Add to cart: ${product.name}`)
+    addToCart(product)
   }
 
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    console.log(`Quick view: ${product.name}`)
+    // Navigate to product detail page
+    console.log(`Navigate to: /product/${product.slug}`)
+    navigateTo(`/product/${product.slug}`)
   }
 
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    console.log(`Add to wishlist: ${product.name}`)
+    toggleWishlist(product)
   }
 
   // Handle price range change
@@ -222,12 +227,7 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Back to shopping link */}
         <button
-          onClick={() => {
-            console.log("Go back to previous page")
-            if (onGoBack) {
-              onGoBack()
-            }
-          }}
+          onClick={() => router.back()}
           className="flex items-center text-gray-600 hover:text-black transition-all duration-300 hover:scale-105 transform group mb-6"
         >
           <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform duration-300" />
@@ -590,17 +590,8 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
 
             {/* Loading State */}
             {isLoading && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {[...Array(6)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden animate-pulse">
-                    <div className="aspect-square bg-gray-200"></div>
-                    <div className="p-4 space-y-3">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex justify-center py-12">
+                <NKMLoader size="lg" />
               </div>
             )}
 
@@ -638,7 +629,9 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
                             onClick={(e) => handleWishlist(e, product)}
                             className="absolute top-2 md:top-3 right-2 md:right-3 p-1.5 md:p-2 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 transform hover:bg-red-50"
                           >
-                            <Heart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+                            <Heart 
+                              className={`w-3 h-3 md:w-4 md:h-4 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} 
+                            />
                           </button>
 
                           {/* Action Buttons - Bottom Right */}
@@ -646,7 +639,7 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
                             {/* Add to Cart */}
                             <button
                               onClick={(e) => handleAddToCart(e, product)}
-                              className="bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn"
+                              className={`bg-white hover:bg-black hover:text-white rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 hover:scale-110 transform group/btn ${isInCart(product.id) ? 'bg-black text-white' : ''}`}
                               title="Add to Cart"
                             >
                               <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 text-gray-600 group-hover/btn:text-white transition-colors duration-300" />
@@ -793,7 +786,9 @@ export default function SearchPage({ onGoBack, onProductSelect }: SearchPageProp
                                 className="bg-gray-100 hover:bg-red-50 text-gray-700 p-2 rounded-lg transition-all duration-300 hover:scale-110 transform"
                                 title="Add to Wishlist"
                               >
-                                <Heart className="w-4 h-4 hover:text-red-500 transition-colors duration-300" />
+                                <Heart 
+                                  className={`w-4 h-4 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} 
+                                />
                               </button>
                             </div>
                           </div>

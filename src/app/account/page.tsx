@@ -8,11 +8,7 @@ import { useRouter } from "next/navigation"
 import { loginUser, signupUser, logoutUser, loginWithGoogle, useAuth } from "@/lib/services/auth-service"
 import { useSession } from "next-auth/react"
 
-interface AccountPageProps {
-  onGoBack?: () => void
-}
-
-export default function AccountPage({ onGoBack }: AccountPageProps) {
+export default function AccountPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()

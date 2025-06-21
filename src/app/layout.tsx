@@ -7,7 +7,8 @@ import ScrollToTop from "@/components/scroll-to-top";
 import WhatsAppButton from "@/components/whatsapp-button";
 import AuthProvider from "@/components/auth-provider";
 import { ShopProvider } from "@/context/ShopContext";
-import { Toaster } from 'react-hot-toast'
+import { NavigationProvider } from "@/context/NavigationContext";
+import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,12 +27,14 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <ShopProvider>
           <AuthProvider>
-            <Navbar />
-            {children}
-            <Footer />
-            <ScrollToTop />
-            <WhatsAppButton />
-            <Toaster position="top-right" />
+            <NavigationProvider>
+              <Navbar />
+              {children}
+              <Footer />
+              <ScrollToTop />
+              <WhatsAppButton />
+              <Toaster />
+            </NavigationProvider>
           </AuthProvider>
         </ShopProvider>
       </body>

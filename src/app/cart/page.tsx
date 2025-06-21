@@ -1,14 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ShoppingCart, Trash2, ArrowRight, ChevronLeft } from "lucide-react"
 import Breadcrumb from "@/components/breadcrumb"
 import Link from "next/link"
 import { useShop } from "@/context/ShopContext"
+import { useRouter } from "next/navigation"
+import { NKMLoader } from "@/components/amazing-loader"
+import { usePageLoading } from "@/hooks/use-loading"
+import { useNavigationWithLoader } from "@/hooks/use-navigation"
 
 export default function CartPage() {
   const { cart, removeFromCart, updateCartItemQuantity, clearCart } = useShop()
   const [isLoading, setIsLoading] = useState(false)
+  const { isLoading: pageLoading, stopLoading } = usePageLoading()
+  const router = useRouter()
+  const { navigateTo } = useNavigationWithLoader()
+
+  // Simulate loading when component mounts
+  useEffect(() => {
+    const loadCart = async () => {
+      // Simulate API call or data loading
+      await new Promise(resolve => setTimeout(resolve, 600))
+      stopLoading()
+    }
+    
+    loadCart()
+  }, [stopLoading])
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -16,21 +34,37 @@ export default function CartPage() {
     { label: "Shopping Cart", current: true },
   ]
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    updateCartItemQuantity(productId, newQuantity)
+  const handleQuantityChange = (productId: string, newQuantity: number, color: string, size: string) => {
+    updateCartItemQuantity(productId, newQuantity, color, size)
   }
 
-  const handleRemoveItem = (productId: string) => {
-    removeFromCart(productId)
+  const handleRemoveItem = (productId: string, color: string, size: string) => {
+    removeFromCart(productId, color, size)
   }
 
   const handleClearCart = () => {
     clearCart()
   }
 
-  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  const handleProductClick = (slug: string) => {
+    navigateTo(`/product/${slug}`)
+  }
+
+  const handleCheckout = async () => {
+    setIsLoading(true)
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    navigateTo('/checkout')
+  }
+
+  const subtotal = cart.reduce((total, item) => total + item.price * (item.quantity || 1), 0)
   const shipping = subtotal > 0 ? 5.99 : 0
   const total = subtotal + shipping
+
+  // Show loader while loading
+  if (pageLoading) {
+    return <NKMLoader fullScreen={true} size="lg" />
+  }
 
   if (cart.length === 0) {
     return (
@@ -80,7 +114,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             {cart.map((item) => (
               <div
-                key={item.id}
+                key={`${item.id}-${item.color}-${item.size}`}
                 className="bg-white rounded-xl shadow-lg p-4 md:p-6 animate-fadeInScale"
               >
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -89,7 +123,8 @@ export default function CartPage() {
                     <img
                       src={item.images[0] || "/placeholder.svg"}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+                      onClick={() => handleProductClick(item.slug)}
                     />
                   </div>
 
@@ -97,13 +132,19 @@ export default function CartPage() {
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div className="flex-1 mr-4">
-                        <h3 className="font-semibold text-gray-900 text-base lg:text-lg">
+                        <h3 
+                          className="font-semibold text-gray-900 text-base lg:text-lg cursor-pointer hover:text-black transition-colors duration-300"
+                          onClick={() => handleProductClick(item.slug)}
+                        >
                           {item.name}
                         </h3>
                         <p className="text-sm text-gray-600">{item.brand}</p>
+                        <p className="text-sm text-gray-500">
+                          {item.color} • {item.size}
+                        </p>
                       </div>
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
+                        onClick={() => handleRemoveItem(item.id, item.color, item.size)}
                         className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all duration-300 hover:scale-110 flex-shrink-0"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -121,14 +162,14 @@ export default function CartPage() {
                       {/* Quantity Controls */}
                       <div className="flex items-center space-x-3">
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1, item.color, item.size)}
                           className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300"
                         >
                           -
                         </button>
-                        <span className="w-8 text-center">{item.quantity}</span>
+                        <span className="w-8 text-center">{item.quantity || 1}</span>
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1, item.color, item.size)}
                           className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300"
                         >
                           +
@@ -164,7 +205,7 @@ export default function CartPage() {
               </div>
 
               <button
-                onClick={() => setIsLoading(true)}
+                onClick={handleCheckout}
                 disabled={isLoading}
                 className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-all duration-300 hover:scale-105 transform mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >

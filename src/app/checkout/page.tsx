@@ -2,25 +2,16 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Check, CreditCard, Truck, MapPin, ArrowLeft, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useShop } from "@/context/ShopContext"
+import { toastSuccess } from "@/hooks/use-toast"
 
-interface CheckoutPageProps {
-  onGoBack?: () => void
-}
-
-interface OrderItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image: string
-  color: string
-  size: string
-}
-
-export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
+export default function CheckoutPage() {
+  const router = useRouter()
+  const { cart, clearCart } = useShop()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     // Shipping Information
@@ -53,29 +44,14 @@ export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
     orderNotes: "",
   })
 
-  const [orderItems] = useState<OrderItem[]>([
-    {
-      id: "1",
-      name: "Tulips Linen Fabric",
-      price: 19.95,
-      quantity: 2,
-      image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      color: "Orange",
-      size: "2 Meters",
-    },
-    {
-      id: "2",
-      name: "Bohem Velvet Fabric",
-      price: 22.95,
-      quantity: 1,
-      image:
-        "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      color: "Teal",
-      size: "1 Meter",
-    },
-  ])
+  // Redirect to cart if cart is empty
+  useEffect(() => {
+    if (cart.length === 0) {
+      router.push('/cart')
+    }
+  }, [cart, router])
 
-  const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const subtotal = cart.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
   const deliveryFee = formData.deliveryOption === "express" ? 9.99 : formData.deliveryOption === "standard" ? 5.99 : 0
   const tax = subtotal * 0.1
   const total = subtotal + deliveryFee + tax
@@ -107,7 +83,11 @@ export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
   }
 
   const handlePlaceOrder = () => {
-    console.log("Order placed:", { formData, orderItems, total })
+    console.log("Order placed:", { formData, cart, total })
+    // Show success message
+    setTimeout(() => toastSuccess("Order placed successfully!"), 0)
+    // Clear the cart after successful order placement (without showing toast)
+    clearCart(false)
     setCurrentStep(4)
   }
 
@@ -117,10 +97,7 @@ export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
         {/* Go Back Button */}
         <button
           onClick={() => {
-            console.log("Go back to cart")
-            if (onGoBack) {
-              onGoBack()
-            }
+            router.back()
           }}
           className="flex items-center text-gray-600 hover:text-black transition-all duration-300 hover:scale-105 transform group mb-6"
         >
@@ -517,10 +494,10 @@ export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
 
                 {/* Order Items */}
                 <div className="space-y-4 mb-8">
-                  {orderItems.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                  {cart.map((item) => (
+                    <div key={`${item.id}-${item.color}-${item.size}`} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                       <img
-                        src={item.image || "/placeholder.svg"}
+                        src={item.images?.[0] || "/placeholder.svg"}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg"
                       />
@@ -646,10 +623,10 @@ export default function CheckoutPage({ onGoBack }: CheckoutPageProps) {
               <h3 className="text-xl font-bold text-black mb-6">Order Summary</h3>
 
               <div className="space-y-4 mb-6">
-                {orderItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-3">
+                {cart.map((item) => (
+                  <div key={`${item.id}-${item.color}-${item.size}`} className="flex items-center space-x-3">
                     <img
-                      src={item.image || "/placeholder.svg"}
+                      src={item.images?.[0] || "/placeholder.svg"}
                       alt={item.name}
                       className="w-12 h-12 object-cover rounded-lg"
                     />

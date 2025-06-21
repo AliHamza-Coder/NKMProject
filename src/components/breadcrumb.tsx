@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronRight, Home } from "lucide-react"
+import Link from "next/link"
 
 interface BreadcrumbItem {
   label: string
@@ -24,25 +25,25 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
             {items.map((item, index) => (
               <div key={index} className="flex items-center">
                 {index === 0 ? (
-                  <a
+                  <Link
                     href={item.href || "/"}
                     className="flex items-center text-gray-600 hover:text-black transition-colors duration-300 hover:scale-105 transform"
                   >
                     {item.label === "Home" && <Home className="w-4 h-4 mr-1" />}
                     {item.label}
-                  </a>
+                  </Link>
                 ) : (
                   <>
                     <ChevronRight className="w-4 h-4 text-gray-400 mx-2" />
                     {item.current ? (
                       <span className="text-black font-medium">{item.label}</span>
                     ) : (
-                      <a
-                        href={item.href}
+                      <Link
+                        href={item.href || "#"}
                         className="text-gray-600 hover:text-black transition-colors duration-300 hover:scale-105 transform"
                       >
                         {item.label}
-                      </a>
+                      </Link>
                     )}
                   </>
                 )}

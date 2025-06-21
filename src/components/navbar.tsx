@@ -66,12 +66,42 @@ export default function Navbar({
   onSearchClick,
 }: NavbarProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const [activeItem, setActiveItem] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [megaMenuHovered, setMegaMenuHovered] = useState(false)
   const { isAuthenticated } = useAuth()
   const { cart, wishlist } = useShop()
 
   // Get marquee messages from JSON data
   const marqueeText = getActiveMarqueeMessages()
+
+  // Helper functions for mega menu hover behavior
+  const handleMouseEnter = (item: string) => {
+    setHoveredItem(item)
+    setMegaMenuHovered(true)
+  }
+
+  const handleMouseLeave = () => {
+    setMegaMenuHovered(false)
+    setHoveredItem(null)
+  }
+
+  // Handle clicks on nav items to maintain active state
+  const handleNavItemClick = (item: string) => {
+    setActiveItem(item)
+  }
+
+  // Handle clicks inside mega menu to maintain active state
+  const handleMegaMenuClick = () => {
+    if (hoveredItem) {
+      setActiveItem(hoveredItem)
+    }
+  }
+
+  // Reset active state when navigating to non-category pages
+  const resetActiveState = () => {
+    setActiveItem(null)
+  }
 
   return (
     <div className="w-full relative">
@@ -100,6 +130,7 @@ export default function Navbar({
         {/* Center Logo - Made Clickable with Next.js Link */}
         <div className="flex-1 flex justify-center">
           <Link href="/"
+            onClick={resetActiveState}
             className="hover:scale-105 transition-transform duration-300 focus:outline-none"
           >
             <img src="/logo.jpg" alt="NKM Fabrics" className="h-20 md:h-24 w-auto object-contain" />
@@ -109,12 +140,14 @@ export default function Navbar({
         {/* Right side icons */}
         <div className="flex-1 flex justify-end items-center space-x-3 md:space-x-4">
           <Link href="/search"
+            onClick={resetActiveState}
             className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110 transform group"
           >
             <Search className="w-5 h-5 text-gray-600 group-hover:text-black transition-colors duration-300" />
           </Link>
 
           <Link href="/wishlist"
+            onClick={resetActiveState}
             className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110 transform group relative"
           >
             <Heart className="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors duration-300" />
@@ -124,6 +157,7 @@ export default function Navbar({
           </Link>
 
           <Link href="/account"
+            onClick={resetActiveState}
             className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110 transform group"
           >
             {isAuthenticated ? (
@@ -134,6 +168,7 @@ export default function Navbar({
           </Link>
 
           <Link href="/cart"
+            onClick={resetActiveState}
             className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110 transform group relative"
           >
             <ShoppingCart className="w-5 h-5 text-gray-600 group-hover:text-black transition-colors duration-300" />
@@ -145,38 +180,134 @@ export default function Navbar({
       </div>
 
       {/* Desktop Navigation Menu with Enhanced Hover Effects */}
-      <div className="hidden lg:block bg-white px-2 md:px-4 py-3 border-b border-gray-100 relative z-40">
-        <nav className="flex items-center justify-center space-x-2 md:space-x-8">
-          {Object.keys(megaMenuData).map((item) => {
-            const typedItem = item as keyof typeof megaMenuData;
-            return (
-              <div
-                key={item}
-                className="relative"
-                onMouseEnter={() => setHoveredItem(typedItem)}
-                onMouseLeave={() => setHoveredItem(null)}
+      <div className="hidden lg:block relative">
+        {/* Single hover area that encompasses both nav and mega menu */}
+        <div 
+          className="relative"
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* Navigation Bar */}
+          <div className="bg-white px-2 md:px-4 py-3 border-b border-gray-100 relative z-40">
+            <nav className="flex items-center justify-center space-x-2 md:space-x-8">
+              {Object.keys(megaMenuData).map((item) => {
+                const typedItem = item as keyof typeof megaMenuData;
+                // Show active state for: hovered item OR (clicked item if nothing is hovered)
+                const isActive = hoveredItem === typedItem || (hoveredItem === null && activeItem === typedItem);
+                return (
+                  <div
+                    key={item}
+                    className="relative group"
+                    onMouseEnter={() => handleMouseEnter(typedItem)}
+                  >
+                    <Link
+                      href={`/category/${encodeURIComponent(item.toLowerCase().replace(/ /g, '-'))}`}
+                      onClick={() => handleNavItemClick(typedItem)}
+                      className={`text-sm font-medium transition-all duration-300 px-2 py-3 block relative ${
+                        isActive
+                          ? "text-red-400"
+                          : "text-gray-700 hover:text-red-400"
+                      }`}
+                    >
+                      {item}
+                      {/* Bottom line animation */}
+                      <span 
+                        className={`absolute bottom-0 left-0 h-0.5 bg-red-400 transition-all duration-300 ${
+                          isActive ? "w-full" : "w-0 group-hover:w-full"
+                        }`}
+                      ></span>
+                    </Link>
+                  </div>
+                )
+              })}
+              <div 
+                className="relative group"
+                onMouseEnter={() => setHoveredItem("Sale")}
               >
                 <Link
-                  href={`/category/${encodeURIComponent(item.toLowerCase().replace(/ /g, '-'))}`}
-                  className={`text-sm font-medium transition-colors ${
-                    typedItem === "Upholstery Fabric"
-                      ? "text-red-400 border-b-2 border-red-400 pb-1"
-                      : "text-gray-700 hover:text-black"
+                  href="/sale"
+                  onClick={() => handleNavItemClick("Sale")}
+                  className={`text-sm font-medium transition-all duration-300 whitespace-nowrap inline-block relative px-2 py-3 ${
+                    hoveredItem === "Sale" || (hoveredItem === null && activeItem === "Sale")
+                      ? "text-red-400"
+                      : "text-red-400 hover:text-red-500"
                   }`}
                 >
-                  {item}
+                  Sale
+                  <span 
+                    className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-300 ${
+                      hoveredItem === "Sale" || (hoveredItem === null && activeItem === "Sale") ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                  ></span>
                 </Link>
               </div>
-            )
-          })}
-          <Link
-            href="/sale"
-            className="text-xs md:text-sm font-medium text-red-400 hover:text-red-500 transition-all duration-300 whitespace-nowrap hover:scale-105 transform inline-block relative pb-2"
-          >
-            Sale
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 hover:w-full"></span>
-          </Link>
-        </nav>
+            </nav>
+          </div>
+
+          {/* Mega Menu - positioned within the same hover area */}
+          {hoveredItem && megaMenuData[hoveredItem as keyof typeof megaMenuData] && (
+            <div 
+              className="absolute top-full left-0 w-full bg-white shadow-2xl border-t border-gray-200 z-[9999] animate-fadeInScale"
+              onClick={handleMegaMenuClick}
+            >
+              <div className="container mx-auto px-4 py-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* Categories - 3 columns */}
+                  <div className="col-span-3 grid grid-cols-3 gap-8">
+                    {Object.entries(megaMenuData[hoveredItem as keyof typeof megaMenuData]).map(([category, items]) => {
+                      if (category === "image") return null
+                      return (
+                        <div key={category} className="animate-slideInUp">
+                          <h3 className="text-sm font-semibold text-gray-900 mb-4 tracking-wider hover:text-red-400 transition-colors duration-300 border-b border-gray-200 pb-2">
+                            {category}
+                          </h3>
+                          <ul className="space-y-2">
+                            {Array.isArray(items) &&
+                              items.map((subItem) => (
+                                <li key={subItem}>
+                                  <Link
+                                    href={`/category/${encodeURIComponent(hoveredItem.toLowerCase().replace(/ /g, '-'))}/${encodeURIComponent(subItem.toLowerCase().replace(/ /g, '-'))}`}
+                                    onClick={handleMegaMenuClick}
+                                    className="text-sm text-gray-600 hover:text-red-400 hover:translate-x-1 transform transition-all duration-300 inline-block"
+                                  >
+                                    {subItem}
+                                  </Link>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Image Section - 1 column */}
+                  <div className="col-span-1 animate-slideInUp delay-200">
+                    <div className="relative group">
+                      <img
+                        src={megaMenuData[hoveredItem as keyof typeof megaMenuData].image || "/placeholder.svg"}
+                        alt={hoveredItem}
+                        className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Default opacity overlay with modern Tailwind syntax */}
+                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-300 rounded-lg"></div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h4 className="text-white font-semibold text-lg mb-2 opacity-100 transition-opacity duration-300 transform translate-y-0 group-hover:translate-y-0">
+                          {hoveredItem}
+                        </h4>
+                        <Link 
+                          href={`/category/${encodeURIComponent(hoveredItem.toLowerCase().replace(/ /g, '-'))}`} 
+                          onClick={handleMegaMenuClick}
+                          className="bg-white text-black px-4 py-2 rounded-lg font-medium opacity-100 transition-all duration-300 transform translate-y-0 group-hover:translate-y-0 hover:bg-gray-100 inline-block"
+                        >
+                          View All
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -187,6 +318,10 @@ export default function Navbar({
               <div key={item} className="mb-4">
                 <Link
                   href={`/category/${encodeURIComponent(item.toLowerCase().replace(/ /g, '-'))}`}
+                  onClick={() => {
+                    handleNavItemClick(item)
+                    setMobileMenuOpen(false)
+                  }}
                   className={`block text-lg font-medium py-2 transition-colors duration-300 ${
                     item === "Sale" ? "text-red-400" : "text-gray-700 hover:text-black"
                   }`}
@@ -206,6 +341,10 @@ export default function Navbar({
                                 <Link
                                   key={subItem}
                                   href={`/category/${encodeURIComponent(item.toLowerCase().replace(/ /g, '-'))}/${encodeURIComponent(subItem.toLowerCase().replace(/ /g, '-'))}`}
+                                  onClick={() => {
+                                    handleNavItemClick(item)
+                                    setMobileMenuOpen(false)
+                                  }}
                                   className="block text-sm text-gray-600 hover:text-black py-1 transition-colors duration-300"
                                 >
                                   {subItem}
@@ -219,72 +358,21 @@ export default function Navbar({
                 )}
               </div>
             ))}
-            <Link href="/sale" className="block text-lg font-medium text-red-400 py-2">
+            <Link 
+              href="/sale" 
+              onClick={() => {
+                handleNavItemClick("Sale")
+                setMobileMenuOpen(false)
+              }}
+              className="block text-lg font-medium text-red-400 py-2"
+            >
               Sale
             </Link>
           </div>
         </div>
       )}
 
-      {/* Enhanced Desktop Mega Menu Dropdown with Images */}
-      {hoveredItem && megaMenuData[hoveredItem as keyof typeof megaMenuData] && (
-        <div
-          className="hidden lg:block absolute top-full left-0 w-full bg-white shadow-2xl border-t border-gray-200 z-[9999] animate-fadeInScale"
-          onMouseEnter={() => setHoveredItem(hoveredItem)}
-          onMouseLeave={() => setHoveredItem(null)}
-        >
-          <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-4 gap-8">
-              {/* Categories - 4 columns */}
-              <div className="col-span-3 grid grid-cols-3 gap-8">
-                {Object.entries(megaMenuData[hoveredItem as keyof typeof megaMenuData]).map(([category, items]) => {
-                  if (category === "image") return null
-                  return (
-                    <div key={category} className="animate-slideInUp">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-4 tracking-wider hover:text-black transition-colors duration-300 border-b border-gray-200 pb-2">
-                        {category}
-                      </h3>
-                      <ul className="space-y-2">
-                        {Array.isArray(items) &&
-                          items.map((item) => (
-                            <li key={item}>
-                              <Link
-                                href={`/category/${encodeURIComponent(hoveredItem.toLowerCase().replace(/ /g, '-'))}/${encodeURIComponent(item.toLowerCase().replace(/ /g, '-'))}`}
-                                className="text-sm text-gray-600 hover:text-black hover:translate-x-1 transform transition-all duration-300 inline-block"
-                              >
-                                {item}
-                              </Link>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )
-                })}
-              </div>
 
-              {/* Image Section - 2 columns */}
-              <div className="col-span-1 animate-slideInUp delay-200">
-                <div className="relative group">
-                  <img
-                    src={megaMenuData[hoveredItem as keyof typeof megaMenuData].image || "/placeholder.svg"}
-                    alt={hoveredItem}
-                    className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg"></div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h4 className="text-white font-semibold text-lg mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
-                      {hoveredItem}
-                    </h4>
-                    <Link href={`/category/${encodeURIComponent(hoveredItem.toLowerCase().replace(/ /g, '-'))}`} className="bg-white text-black px-4 py-2 rounded-lg font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 hover:bg-gray-100 inline-block">
-                      View All
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Custom CSS for animations */}
       <style jsx>{`

@@ -1,10 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Heart, Minus, Plus, ShoppingCart, Eye } from "lucide-react"
 import { products, type Product } from "../data/products"
 import Breadcrumb from "./breadcrumb"
 import { useShop } from "@/context/ShopContext"
+import { NKMLoader } from "./amazing-loader"
+import { usePageLoading } from "@/hooks/use-loading"
+import { useNavigationWithLoader } from "@/hooks/use-navigation"
 
 interface ProductDetailProps {
   productSlug?: string
@@ -12,12 +15,25 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ productSlug = "tulips-linen-fabric", onGoBack }: ProductDetailProps) {
-  const { addToCart, addToWishlist, isInCart, isInWishlist } = useShop()
+  const { addToCart, toggleWishlist, isInCart, isInWishlist } = useShop()
+  const { isLoading, stopLoading } = usePageLoading()
+  const { navigateTo } = useNavigationWithLoader()
   const product = products.find((p) => p.slug === productSlug) || products[0]
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedColor, setSelectedColor] = useState(product.colors[0])
   const [selectedSize, setSelectedSize] = useState(product.sizes[0])
   const [quantity, setQuantity] = useState(1)
+
+  // Simulate loading when component mounts or product changes
+  useEffect(() => {
+    const loadProduct = async () => {
+      // Simulate API call or data loading
+      await new Promise(resolve => setTimeout(resolve, 500))
+      stopLoading()
+    }
+    
+    loadProduct()
+  }, [productSlug, stopLoading])
 
   const relatedProducts = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4)
 
@@ -28,7 +44,7 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation()
-    addToCart(product)
+    addToCart(product, selectedColor, selectedSize)
   }
 
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
@@ -37,8 +53,14 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
   }
 
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    addToWishlist(product)
+    toggleWishlist(product)
+  }
+
+  // Show loader while loading
+  if (isLoading) {
+    return <NKMLoader fullScreen={true} size="lg" />
   }
 
   return (
@@ -179,8 +201,11 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
                 ADD TO CART
               </button>
 
-              <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-300 hover:scale-110 transform">
-                <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+              <button 
+                onClick={(e) => handleWishlist(e, product)}
+                className="p-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-300 hover:scale-110 transform"
+              >
+                <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500 transition-colors duration-300`} />
               </button>
             </div>
 
@@ -226,7 +251,7 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
                   key={relatedProduct.id}
                   className="group cursor-pointer animate-fadeInScale"
                   style={{ animationDelay: `${index * 0.1}s` }}
-                  onClick={() => window.location.href = `/product/${relatedProduct.slug}`}
+                  onClick={() => navigateTo(`/product/${relatedProduct.slug}`)}
                 >
                   <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 mb-4">
                     <img
@@ -253,7 +278,7 @@ export default function ProductDetail({ productSlug = "tulips-linen-fabric", onG
             {products.filter(p => p.id !== product.id).slice(0, 4).map((suggestedProduct, index) => (
               <div
                 key={suggestedProduct.id}
-                onClick={() => window.location.href = `/product/${suggestedProduct.slug}`}
+                onClick={() => navigateTo(`/product/${suggestedProduct.slug}`)}
                 className="group cursor-pointer animate-fadeInScale"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >

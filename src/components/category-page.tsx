@@ -2,11 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Heart, ShoppingCart, Eye, X, ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react"
 import { products, type Product, categories, brands, suitabilityOptions } from "../data/products"
 import Breadcrumb from "./breadcrumb"
 import { useShop } from "@/context/ShopContext"
+import { NKMLoader } from "./amazing-loader"
+import { usePageLoading } from "@/hooks/use-loading"
+import { useNavigationWithLoader } from "@/hooks/use-navigation"
 
 interface CategoryPageProps {
   categorySlug?: string
@@ -14,7 +17,9 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ categorySlug = "all-categories", onProductSelect }: CategoryPageProps) {
-  const { addToCart, addToWishlist, isInCart, isInWishlist } = useShop()
+  const { addToCart, toggleWishlist, isInCart, isInWishlist } = useShop()
+  const { isLoading, stopLoading } = usePageLoading()
+  const { navigateTo } = useNavigationWithLoader()
 
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50])
@@ -30,6 +35,17 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
     brands: true,
     suitability: true,
   })
+
+  // Simulate loading when component mounts or category changes
+  useEffect(() => {
+    const loadCategory = async () => {
+      // Simulate API call or data loading
+      await new Promise(resolve => setTimeout(resolve, 600))
+      stopLoading()
+    }
+    
+    loadCategory()
+  }, [categorySlug, stopLoading])
 
   // Get category name
   const category = categories.find((c) => c.id === categorySlug) || categories[0]
@@ -103,30 +119,41 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
     if (onProductSelect) {
       onProductSelect(product.slug)
     } else {
-      // Navigate to product detail page using slug
-      window.location.href = `/product/${product.slug}`
+      // Navigate to product detail page using slug with loader
+      navigateTo(`/product/${product.slug}`)
     }
   }
 
   // Handle action buttons
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
     addToCart(product)
   }
 
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    // Quick view modal functionality
+    // Navigate to product detail page
+    console.log(`Navigate to: /product/${product.slug}`)
+    if (onProductSelect) {
+      onProductSelect(product.slug)
+    } else {
+      // Navigate to product detail page using slug with loader
+      navigateTo(`/product/${product.slug}`)
+    }
   }
 
   const handleCompare = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
     console.log(`Add to compare: ${product.name}`)
   }
 
   const handleWishlist = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault()
     e.stopPropagation()
-    addToWishlist(product)
+    toggleWishlist(product)
   }
 
   // Handle price range change
@@ -161,6 +188,11 @@ export default function CategoryPage({ categorySlug = "all-categories", onProduc
     setSelectedBrands([])
     setSelectedSuitability([])
     setSelectedCategory("all-categories")
+  }
+
+  // Show loader while loading
+  if (isLoading) {
+    return <NKMLoader fullScreen={true} size="lg" />
   }
 
   return (
